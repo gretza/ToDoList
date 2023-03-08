@@ -3,18 +3,33 @@ import { useEffect, useState } from "react";
 
 export const useList = () => {
   const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState();
 
-  useEffect(() => {
-    getList().then((data) => {
+  const handleInitialLoad = async () => {
+    setLoading(true);
+    try {
+      const data = await getList();
       setList(data.documents);
-    });
-  }, []);
+    } catch (error) {
+      setError("Could not load Todo list. Please reload the page.");
+    }
 
-  const reloadData = () => {
-    getList().then((data) => {
-      setList(data.documents);
-    });
+    setLoading(false);
   };
 
-  return { list, reloadData };
+  const handleReload = async () => {
+    try {
+      const data = await getList();
+      setList(data.documents);
+    } catch (error) {
+      setError("Could not reload Todo list. Please reload the page.");
+    }
+  };
+
+  useEffect(() => {
+    handleInitialLoad();
+  }, []);
+
+  return { list, reloadData: handleReload, loading, error };
 };

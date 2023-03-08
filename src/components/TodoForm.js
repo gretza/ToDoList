@@ -1,45 +1,54 @@
 import { TextField, Typography, Button, Box } from "@mui/material";
 import { postTodo } from "../services/postTodo";
+import { useForm } from "react-hook-form";
+import { updateTodo } from "../services/updateTodo";
+import { useState } from "react";
+import React from "react";
+import Alert from "@mui/material/Alert";
 
-export const TodoForm = ({onSubmit, onClose}) => {
+
+export const TodoForm = ({ onClose, editData }) => {
+  const [error, setError] = useState("Test");
+  const { register, handleSubmit } = useForm({
+    defaultValues: editData || {
+      completed: false,
+      title: "",
+      description: "",
+    },
+  });
+
   return (
     <Box display="flex" flexDirection="column" gap={3}>
-      <Typography variant="h4">Add new Todo</Typography>
+      <Typography variant="h4">
+        {editData ? "Edit Todo" : "Add Todo"}
+      </Typography>
+
+      {error && <Alert severity="error">{error}</Alert>}
+
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const formData = new FormData(e.target);
-          const todo = {
-            completed: false,
-          };
-
-          for (let [name, value] of formData.entries()) {
-            todo[name] = value;
+        onSubmit={handleSubmit(async (data) => {
+          try {
+            if (editData) {
+              await updateTodo(data);
+            } else {
+              await postTodo(data);
+            }
+            onClose?.();
+          } catch (error) {
+            setError("Could not save Todo. Please try again.");
           }
-
-          postTodo(todo).then((data) => {
-            if(onSubmit) onSubmit();
-            if(onClose) onClose();
-          })
-        }}
+        })}
       >
         <Box display="flex" flexDirection="column" gap={3}>
+          <TextField required {...register("title")} label="Title" fullWidth />
           <TextField
             required
-            id="outlined-required"
-            name="title"
-            label="Title"
-            fullWidth
-          />
-          <TextField
-            required
-            id="todo-description"
-            name="description"
+            {...register("description")}
             label="Description"
             fullWidth
           />
           <Button variant="contained" type="submit">
-            Add Todo
+            {editData ? "Edit Todo" : "Add Todo"}
           </Button>
         </Box>
       </form>
